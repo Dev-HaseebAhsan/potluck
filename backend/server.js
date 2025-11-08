@@ -5,11 +5,14 @@ const cors = require('cors');
 const verifyToken = require('./middleware/auth');
 
 const app = express();
+const apiRouter = require('./api');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// API routes
+app.use('/api', apiRouter);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
