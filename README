@@ -1,5 +1,0 @@
-# Potluck App 🍲
-A social media platform for sharing recipes & other food-related content.
-
-Note, use this in /app to startup the app:
-npx expo start --web --clear
