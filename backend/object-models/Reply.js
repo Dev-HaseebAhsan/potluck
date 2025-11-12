@@ -38,7 +38,7 @@ const replySchema = new mongoose.Schema({
   }
 });
 
-postSchema.pre('save', function(next) {
+replySchema.pre('save', function(next) {
   this.dateUpdated = Date.now();
   next();
 });
