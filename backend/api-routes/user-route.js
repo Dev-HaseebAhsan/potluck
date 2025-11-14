@@ -73,8 +73,23 @@ router.get('/profile/:handle', async (req, res) => {
   }
 });
 
-// TODO: Add handling for getting the currently logged in user's profile
+// Handling for getting the currently logged in user's profile
+router.get('/profile/me', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ firebaseUid: req.user.uid })
+    .populate('followers', 'handle displayName')
+    .populate('following', 'handle displayName');
 
+    if (!user){
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Failed to get logged in user\'s profile: ', error);
+    res.status(500).json({ error: 'Failed to get logged in user\'s profile' });
+  }
+});
 
 // Handles updating the user's profile
   // NOTE: The user must be logged in to update their profile
@@ -108,8 +123,65 @@ router.put('/profile', verifyToken, async (req, res) => {
   }
 });
 
-// TODO: Add handling for following a user
+// Handling for following a user
+router.post('/follow/:handle', verifyToken, async (req, res) => {
+  try {
+    const currentUser = await User.findOne({ firebaseUid: req.user.uid });
+    const targetUser = await User.findOne({ handle: req.params.handle });
 
-// TODO: Add handling for unfollowing a user
+    if (!currentUser || !targetUser){
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevents users from following themselves
+    if (currentUser.id === targetUser.id){
+      return res.status(400).json({ error: 'You cannot follow yourself' });
+    }
+
+    // Prevents users from following someone they already follow
+    if (currentUser.following.includes(targetUser.id)){
+      return res.status(400).json({ error: 'You are already following this user' });
+    }
+
+    // Adds the target user to the current user's following list & vice versa for followers
+    await User.findByIdAndUpdate(currentUser._id, {
+      $addToSet: { following: targetUser._id }
+    });
+    await User.findByIdAndUpdate(targetUser._id, {
+      $addToSet: { followers: currentUser._id }
+    });
+    res.json({ message: `You are now following & a follower of ${targetUser.handle}`});
+  } catch (error) {
+    console.error('Failed to follow user: ', error);
+    res.status(500).json({ error: 'Failed to follow user' });
+  }
+});
+
+// Handling for unfollowing a user (basically the reverse of following)
+router.post('/unfollow/:handle', verifyToken, async (req, res) => {
+  try {
+    const currentUser = await User.findOne({ firebaseUid: req.user.uid });
+    const targetUser = await User.findOne({ handle: req.params.handle });
+    if (!currentUser || !targetUser){
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!currentUser.following.includes(targetUser.id)){
+      return res.status(400).json({ error: 'You are not following this user' });
+    }
+
+    await User.findByIdAndUpdate(currentUser._id, {
+      $pull: { following: targetUser._id }
+    });
+    await User.findByIdAndUpdate(targetUser._id, {
+      $pull: { followers: currentUser._id }
+    });
+    res.json({ message: `You have unfollowed & been removed as a follower of ${targetUser.handle}`});
+  } catch (error) {
+    console.error('Failed to unfollow user: ', error);
+    res.status(500).json({ error: 'Failed to unfollow user' });
+  }
+});
+
 
 module.exports = router;

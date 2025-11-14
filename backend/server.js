@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const verifyToken = require('./middleware/auth');
+const userRoutes = require('./api-routes/user-route');
 
 const app = express();
 const apiRouter = require('./api');
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // API routes
 app.use('/api', apiRouter);
+app.use('/api/users', userRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
