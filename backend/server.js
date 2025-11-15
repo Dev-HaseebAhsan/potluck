@@ -6,14 +6,12 @@ const verifyToken = require('./middleware/auth');
 const userRoutes = require('./api-routes/user-route');
 
 const app = express();
-const apiRouter = require('./api');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// API routes
-app.use('/api', apiRouter);
+
 app.use('/api/users', userRoutes);
 
 // MongoDB Connection
